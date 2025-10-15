@@ -8,6 +8,7 @@ import TVShows from "./TVShows";
 
 function App() {
   const [sData, setData] = useState(null);
+
   useEffect(() => {
     fetchAllData();
   }, []);

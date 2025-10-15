@@ -1,25 +1,38 @@
-import React from "react";
 import { Link } from "react-router-dom";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, useRef } from "react";
 
 const TVShows = () => {
   const [searchTv, setSearchTv] = useState(null);
   const [searchTvText, setSearchTvText] = useState("");
+  const [searchTvResult, setSearchTvResult] = useState(false);
+  const [mobileMenu, setMobileMenu] = useState(false);
+
   const [actionTv, setActionTv] = useState("");
   const [dramaTv, setDramaTv] = useState("");
   const [horrorTv, setsciandfanTv] = useState("");
-  const [thrillerTv, setmysteryTv] = useState("");
+  const [mysteryTv, setmysteryTv] = useState("");
   const [animationTv, setAnimationTv] = useState("");
+  const inputRef = useRef();
+  const containerRef = useRef();
   const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+  function handleMenuOnClick() {
+    if (mobileMenu) {
+      setMobileMenu(false);
+    } else {
+      setMobileMenu(true);
+    }
+  }
+
   const searchOnlyTvData = useCallback(async () => {
     try {
       const res = await fetch(
-        `https://api.themoviedb.org/3/search/movie?api_key=${apikey}&query=${encodeURIComponent(
+        `https://api.themoviedb.org/3/search/tv?api_key=${apikey}&query=${encodeURIComponent(
           searchTvText
         )}`
       );
       const data = await res.json();
       setSearchTv(data);
+      setSearchTvResult(true);
       console.log("TV only", data);
     } catch (err) {
       console.error("TV error", err);
@@ -39,6 +52,13 @@ const TVShows = () => {
     sciandfantasyFetch();
     mysteryFetch();
     animationFetch();
+    function focussearch(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        return setSearchTvResult(false);
+      }
+    }
+    document.addEventListener("click", focussearch);
+    return () => document.removeEventListener("click", focussearch);
   }, []);
   /*data for searchmovie section */
 
@@ -116,7 +136,7 @@ const TVShows = () => {
   const tvactions = actionTv?.results;
   const tvdrama = dramaTv?.results;
   const tvscifiandfantasy = horrorTv?.results;
-  const tvmystery = thrillerTv?.results;
+  const tvmystery = mysteryTv?.results;
   const tvanimation = animationTv?.results;
 
   if (!tvactions) return <div className="text-white">Loading...</div>;
@@ -126,7 +146,7 @@ const TVShows = () => {
   if (!tvanimation) return <div className="text-white">Loading...</div>;
 
   return (
-    <div>
+    <div className="relative">
       <div className="bg-orange-950 p-4 flex items-center justify-between">
         <div className="text-black font-[Bebas+Neue] text-xl md:text-3xl font-extrabold tracking-wide ">
           <span className=" inline-block hover:rotate-[1turn]  cursor-pointer transition-all duration-[0.7s] ease-in hover:scale-150">
@@ -134,15 +154,16 @@ const TVShows = () => {
           </span>
           MALIKMARTINS
         </div>
-        <div className=" md:hidden ">
-          <img src="/menu.svg" alt="" />
+        <div className=" md:hidden cursor-pointer " onClick={handleMenuOnClick}>
+          <img src="/menu.svg" alt="menu" />
         </div>
+
         <div className="hidden  md:flex gap-10 font-bold text-xl">
           <div className="relative group">
             <Link to="/">HOME</Link>
             <div className="border-b-4 absolute w-0  -bottom-[20px] border-black  group-hover:w-full transition-all duration-[0.4s] ease-in-out  "></div>
           </div>
-          <div className="relative ">
+          <div className="relative group ">
             <Link to="/movies">MOVIES</Link>
             <div className="border-b-4 absolute w-0  -bottom-[20px] border-black  group-hover:w-full transition-all duration-[0.4s] ease-in-out  "></div>
           </div>
@@ -151,10 +172,25 @@ const TVShows = () => {
             <div className="border-b-4 absolute w-full  -bottom-[20px] border-black "></div>
           </div>
         </div>
+        {mobileMenu && (
+          <div className=" absolute w-full  top-0 transform translate-y-15 right-0 z-10 flex flex-col bg-black opacity-70 text-white ">
+            <Link to="/">
+              <div className="p-2 border-b-2 border-orange-950 ">HOME</div>
+            </Link>
+            <Link to="/movies">
+              <div className=" p-2 border-b-2 border-orange-950  ">MOVIES</div>
+            </Link>
+            <Link to="/tv">
+              <div className=" p-2 border-b-2 border-orange-950  ">
+                TV SHOWS
+              </div>
+            </Link>
+          </div>
+        )}
       </div>
       <div className="flex flex-col items-center  mt-10 mb-15 px-4">
         {/* Search Container */}
-        <div className="relative w-full max-w-[600px]">
+        <div className="relative w-full max-w-[600px]" ref={containerRef}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -164,13 +200,15 @@ const TVShows = () => {
             <img
               src="/icon-search copy.svg"
               alt="searchicon"
-              className="absolute top-1/2 left-3 transform -translate-y-1/2 w-4 h-4"
+              className="absolute top-1/2 left-3 transform -translate-y-1/2 w-4 h-4 "
             />
 
             {/* Input */}
             <input
               type="text"
+              ref={inputRef}
               value={searchTvText}
+              onFocus={() => setSearchTvResult(true)}
               placeholder="Search Tvshows..."
               className="w-full bg-black text-gray-100 outline-none h-10 pl-10 pr-4 rounded-lg border border-orange-950"
               onChange={(e) => setSearchTvText(e.target.value)}
@@ -186,7 +224,7 @@ const TVShows = () => {
           </form>
 
           {/* Results Box */}
-          {searchonlyTv?.length > 0 && (
+          {searchTvResult && searchonlyTv?.length > 0 && (
             <div className="absolute top-full left-0 w-full bg-black border border-orange-950 mt-2 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
               {searchonlyTv.slice(0, 5).map((watch, i) => (
                 <div
@@ -347,7 +385,7 @@ const TVShows = () => {
                 src={
                   item.poster_path
                     ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-image.png"
+                    : "/blackkk at 13.48.28_ec0a14a9.jpg"
                 }
                 className="rounded-2xl"
                 alt={item.name}

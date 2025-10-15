@@ -5,8 +5,16 @@ import { Link } from "react-router-dom";
 const Home = ({ trendingAll }) => {
   const [searchAll, setSearchAll] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [mobileMenu, setMobileMenu] = useState(false);
   const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
   const search = searchAll?.results;
+  function handleMenuOnClick() {
+    if (mobileMenu) {
+      setMobileMenu(false);
+    } else {
+      setMobileMenu(true);
+    }
+  }
   /*Home search*/
   const fetchSearchData = useCallback(async () => {
     if (!searchText.trim()) return;
@@ -51,7 +59,7 @@ const Home = ({ trendingAll }) => {
           </span>
           MALIKMARTINS
         </div>
-        <div className=" md:hidden">
+        <div className=" md:hidden cursor-pointer" onClick={handleMenuOnClick}>
           <img src="/menu.svg" alt="menu" />
         </div>
         <div className=" hidden md:flex gap-10 font-bold text-xl">
@@ -72,6 +80,19 @@ const Home = ({ trendingAll }) => {
           </div>
         </div>
       </div>
+      {mobileMenu && (
+        <div className=" absolute w-full  top-0 transform translate-y-15 right-0 z-10 flex flex-col bg-black opacity-70 text-white ">
+          <Link to="/">
+            <div className="p-2 border-b-2 border-orange-950 ">HOME</div>
+          </Link>
+          <Link to="/movies">
+            <div className=" p-2 border-b-2 border-orange-950  ">MOVIES</div>
+          </Link>
+          <Link to="/tv">
+            <div className=" p-2 border-b-2 border-orange-950  ">TV SHOWS</div>
+          </Link>
+        </div>
+      )}
       <div className="flex flex-col items-center mt-10 mb-10 px-4">
         {/* Search Container */}
         <div className="relative w-full max-w-[600px]">
@@ -144,7 +165,11 @@ const Home = ({ trendingAll }) => {
           >
             <div className="flex flex-col gap-3 border-rounded">
               <img
-                src={`https://image.tmdb.org/t/p/w1280${item.poster_path}`}
+                src={
+                  item.poster_path
+                    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+                    : "/blackkk at 13.48.28_ec0a14a9.jpg"
+                }
                 alt={item.name || item.title}
               />
             </div>

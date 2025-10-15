@@ -1,16 +1,27 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useState } from "react";
 
 const Movies = () => {
   const [searchMovies, setSearchMovies] = useState(null);
+  const [searchMoviesResult, setSearchMoviesResult] = useState(false);
   const [searchMoviesText, setSearchMoviesText] = useState("");
   const [actionMovies, setActionMovies] = useState("");
   const [dramaMovie, setDramaMovie] = useState("");
   const [horrorMovie, setHorrorMovie] = useState("");
   const [thrillerMovie, setThrillerMovie] = useState("");
   const [animationMovie, setAnimationMovie] = useState("");
+  const [mobileMenu, setMobileMenu] = useState(false);
+  const inputRef = useRef(true);
+  const containerRef = useRef(false);
   const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+  function handleMenuOnClick() {
+    if (mobileMenu) {
+      setMobileMenu(false);
+    } else {
+      setMobileMenu(true);
+    }
+  }
   const searchOnlyMovieData = useCallback(async () => {
     try {
       const res = await fetch(
@@ -20,6 +31,7 @@ const Movies = () => {
       );
       const data = await res.json();
       setSearchMovies(data);
+      setSearchMoviesResult(true);
       console.log("moviesonly", data);
     } catch (err) {
       console.error("movies error", err);
@@ -39,7 +51,18 @@ const Movies = () => {
     horrorFetch();
     thrillerFetch();
     animationFetch();
+
+    function focusSearch(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        return setSearchMoviesResult(false);
+      }
+    }
+    document.addEventListener("click", focusSearch);
+
+    // Cleanup on unmount
+    return () => document.removeEventListener("click", focusSearch);
   }, []);
+
   /*data for searchmovie section */
 
   function handleOnlyMovieOnClick() {
@@ -133,7 +156,10 @@ const Movies = () => {
           </span>
           MALIKMARTINS
         </div>
-        <div className=" md:hidden ">
+        <div
+          className=" md:hidden  cursor-pointer  "
+          onClick={handleMenuOnClick}
+        >
           <img src="/menu.svg" alt="" />
         </div>
         <div className="hidden  md:flex gap-10 font-bold text-xl">
@@ -150,10 +176,25 @@ const Movies = () => {
             <div className="border-b-4 absolute w-0  -bottom-[20px] border-black  group-hover:w-full transition-all duration-[0.4s] ease-in-out  "></div>
           </div>
         </div>
+        {mobileMenu && (
+          <div className=" absolute w-full  top-0 transform translate-y-15 right-0 z-10 flex flex-col bg-black opacity-70 text-white ">
+            <Link to="/">
+              <div className="p-2 border-b-2 border-orange-950 ">HOME</div>
+            </Link>
+            <Link to="/movies">
+              <div className=" p-2 border-b-2 border-orange-950  ">MOVIES</div>
+            </Link>
+            <Link to="/tv">
+              <div className=" p-2 border-b-2 border-orange-950  ">
+                TV SHOWS
+              </div>
+            </Link>
+          </div>
+        )}
       </div>
       <div className="flex flex-col items-center  mt-10 mb-15 px-4">
         {/* Search Container */}
-        <div className="relative w-full max-w-[600px]">
+        <div className="relative w-full max-w-[600px]" ref={containerRef}>
           <form
             onSubmit={(e) => {
               e.preventDefault();
@@ -169,7 +210,9 @@ const Movies = () => {
             {/* Input */}
             <input
               type="text"
+              ref={inputRef}
               value={searchMoviesText}
+              onFocus={() => setSearchMoviesResult(true)}
               placeholder="Search Movies..."
               className="w-full bg-black text-gray-100 outline-none h-10 pl-10 pr-4 rounded-lg border border-orange-950"
               onChange={(e) => setSearchMoviesText(e.target.value)}
@@ -185,7 +228,7 @@ const Movies = () => {
           </form>
 
           {/* Results Box */}
-          {searchonlyM?.length > 0 && (
+          {searchMoviesResult && searchonlyM?.length > 0 && (
             <div className="absolute top-full left-0 w-full bg-black border border-orange-950 mt-2 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
               {searchonlyM.slice(0, 5).map((watch, i) => (
                 <div
@@ -222,7 +265,7 @@ const Movies = () => {
                 src={
                   item.poster_path
                     ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-image.png"
+                    : "/blackkk at 13.48.28_ec0a14a9.jpg"
                 }
                 className="rounded-2xl"
                 alt={item.title}
