@@ -1,11 +1,52 @@
-import React, { useCallback, useEffect } from "react";
+import React, { useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
 import { Link } from "react-router-dom";
 
-const Home = ({ trendingAll }) => {
+const Home = () => {
   const [searchAll, setSearchAll] = useState(null);
   const [searchText, setSearchText] = useState("");
+  const [searchResult, setSearchResult] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
+  const [sData, setData] = useState(null);
+
+  useEffect(() => {
+    fetchAllData();
+    function focusSearch(e) {
+      if (containerRef.current && !containerRef.current.contains(e.target)) {
+        setSearchResult(false);
+      }
+    }
+    document.addEventListener("click", focusSearch);
+    return () => document.removeEventListener("click", focusSearch);
+  }, []);
+
+  /*default fetch */
+  function fetchAllData() {
+    Promise.all([
+      fetch(
+        "https://api.themoviedb.org/3/trending/all/week?page=1&api_key=7fb2198dd66a3bd9c3257d003f070a5e"
+      ).then((res) => res.json()),
+      fetch(
+        "https://api.themoviedb.org/3/trending/all/week?page=2&api_key=7fb2198dd66a3bd9c3257d003f070a5e"
+      ).then((res) => res.json()),
+    ])
+      .then(([page1, page2]) => {
+        console.log("Page 1 data:", page1);
+        console.log("Page 2 data:", page2);
+
+        if (!page1?.results || !page2?.results) {
+          console.error("One of the API responses is invalid:", page1, page2);
+          return;
+        }
+
+        const combined = [...page1.results, ...page2.results];
+        console.log("Combined trending:", combined);
+        setData(combined);
+      })
+      .catch((err) => console.error("Fetch error:", err));
+  }
+  const inputRef = useRef();
+  const containerRef = useRef();
   const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
   const search = searchAll?.results;
   function handleMenuOnClick() {
@@ -26,6 +67,7 @@ const Home = ({ trendingAll }) => {
       );
       const data = await response.json();
       setSearchAll(data);
+      setSearchResult(true);
 
       console.log(data);
     } catch (err) {
@@ -47,8 +89,8 @@ const Home = ({ trendingAll }) => {
     fetchSearchData();
   }
 
-  if (!trendingAll) return <div className="text-white">Loading...</div>;
-  const trending = trendingAll;
+  if (!sData) return <div className="text-white">Loading...</div>;
+  const trending = sData;
 
   return (
     <div>
@@ -93,7 +135,10 @@ const Home = ({ trendingAll }) => {
           </Link>
         </div>
       )}
-      <div className="flex flex-col items-center mt-10 mb-10 px-4">
+      <div
+        className="flex flex-col items-center mt-10 mb-10 px-4"
+        ref={containerRef}
+      >
         {/* Search Container */}
         <div className="relative w-full max-w-[600px]">
           {/* Search Icon */}
@@ -112,6 +157,7 @@ const Home = ({ trendingAll }) => {
             {/* Input */}
             <input
               type="text"
+              ref={inputRef}
               value={searchText}
               placeholder="Search..."
               className="w-full bg-black text-gray-100 outline-none h-10 pl-10 pr-4 rounded-lg border border-orange-950"
@@ -128,7 +174,7 @@ const Home = ({ trendingAll }) => {
           </form>
 
           {/* Results Box */}
-          {search?.length > 0 && (
+          {searchResult && search?.length > 0 && (
             <div className="absolute top-full left-0 w-full bg-black border border-orange-950 mt-2 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
               {search.slice(0, 5).map((watch, i) => (
                 <div
