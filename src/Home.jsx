@@ -159,6 +159,7 @@ const Home = () => {
               type="text"
               ref={inputRef}
               value={searchText}
+              onFocus={() => setSearchResult(true)}
               placeholder="Search..."
               className="w-full bg-black text-gray-100 outline-none h-10 pl-10 pr-4 rounded-lg border border-orange-950"
               onChange={(e) => setSearchText(e.target.value)}
