@@ -1,5 +1,5 @@
 import React, { useCallback, useEffect, useRef } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState } from "react";
 
 const Movies = () => {
@@ -15,6 +15,7 @@ const Movies = () => {
   const inputRef = useRef(true);
   const containerRef = useRef(false);
   const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+  const navigate = useNavigate();
   function handleMenuOnClick() {
     if (mobileMenu) {
       setMobileMenu(false);
@@ -62,11 +63,17 @@ const Movies = () => {
     // Cleanup on unmount
     return () => document.removeEventListener("click", focusSearch);
   }, []);
-
-  /*data for searchmovie section */
-
-  function handleOnlyMovieOnClick() {
-    searchOnlyMovieData();
+  {
+    /*for details */
+  }
+  async function clickM(id) {
+    navigate(`/details/movie/${id}`);
+  }
+  // Update handleOnClickSearch:
+  function handleOnClickSearch() {
+    if (searchMoviesText.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchMoviesText)}`);
+    }
   }
 
   /*fetch by genre movie section */
@@ -198,7 +205,7 @@ const Movies = () => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleOnlyMovieOnClick();
+              handleOnClickSearch();
             }}
           >
             <img
@@ -232,7 +239,8 @@ const Movies = () => {
             <div className="absolute top-full left-0 w-full bg-black border border-orange-950 mt-2 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
               {searchonlyM.slice(0, 5).map((watch, i) => (
                 <div
-                  key={i}
+                  key={`${watch.id}-${i}`}
+                  onClick={() => clickM(watch.id)}
                   className="flex items-center gap-3 p-2 hover:bg-orange-950/20 border-b border-orange-950"
                 >
                   <img
@@ -240,7 +248,7 @@ const Movies = () => {
                     src={
                       watch.poster_path
                         ? `https://image.tmdb.org/t/p/w92${watch.poster_path}`
-                        : "/no-image.png"
+                        : "/no-poster-image.jpg"
                     }
                     alt={watch.title}
                   />
@@ -258,6 +266,7 @@ const Movies = () => {
         {moviesactions?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300"
           >
             <div>
@@ -289,6 +298,7 @@ const Movies = () => {
         {moviesdrama?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300 "
           >
             <div>
@@ -320,6 +330,7 @@ const Movies = () => {
         {movieshorror?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer  hover:shadow-[0_0_15px_#431407] transition-all duration-300"
           >
             <div>
@@ -347,10 +358,11 @@ const Movies = () => {
       <div className=" flex justify-center mb-2  md:px-15  md:justify-start font-[Lobster] text-5xl text-orange-950  items-center gap-2">
         Thriller
       </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2 ">
         {moviesthriller?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300 "
           >
             <div>
@@ -382,6 +394,7 @@ const Movies = () => {
         {moviesanimation?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300"
           >
             <div>

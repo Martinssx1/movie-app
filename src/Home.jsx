@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useRef } from "react";
 import { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 
 const Home = () => {
   const [searchAll, setSearchAll] = useState(null);
@@ -8,6 +8,7 @@ const Home = () => {
   const [searchResult, setSearchResult] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
   const [sData, setData] = useState(null);
+  const navigate = useNavigate();
 
   useEffect(() => {
     fetchAllData();
@@ -31,16 +32,13 @@ const Home = () => {
       ).then((res) => res.json()),
     ])
       .then(([page1, page2]) => {
-        console.log("Page 1 data:", page1);
-        console.log("Page 2 data:", page2);
-
         if (!page1?.results || !page2?.results) {
           console.error("One of the API responses is invalid:", page1, page2);
           return;
         }
 
         const combined = [...page1.results, ...page2.results];
-        console.log("Combined trending:", combined);
+
         setData(combined);
       })
       .catch((err) => console.error("Fetch error:", err));
@@ -54,6 +52,12 @@ const Home = () => {
       setMobileMenu(false);
     } else {
       setMobileMenu(true);
+    }
+  }
+
+  function handleOnClickSearch() {
+    if (searchText.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchText)}`);
     }
   }
   /*Home search*/
@@ -85,8 +89,12 @@ const Home = () => {
     return () => clearTimeout(id);
   }, [searchText, fetchSearchData]);
 
-  function handleOnClickSearch() {
-    fetchSearchData();
+  async function clickM(id, mediatype) {
+    if (mediatype === "movie") {
+      navigate(`/details/movie/${id}`);
+    } else {
+      navigate(`/details/tv/${id}`);
+    }
   }
 
   if (!sData) return <div className="text-white">Loading...</div>;
@@ -179,15 +187,16 @@ const Home = () => {
             <div className="absolute top-full left-0 w-full bg-black border border-orange-950 mt-2 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
               {search.slice(0, 5).map((watch, i) => (
                 <div
-                  key={i}
+                  key={`${watch.id}-${i}`}
+                  onClick={() => clickM(watch.id, watch.media_type)}
                   className="flex items-center gap-3 p-2 hover:bg-orange-950/20 border-b border-orange-950"
                 >
                   <img
                     className="w-10 h-14 object-cover rounded"
                     src={
                       watch.poster_path
-                        ? `https://image.tmdb.org/t/p/w92${watch.poster_path}`
-                        : "/no-image.png"
+                        ? `https://image.tmdb.org/t/p/w500${watch.poster_path}`
+                        : "/no-poster-image.jpg"
                     }
                     alt={watch.name || watch.title}
                   />
@@ -205,9 +214,10 @@ const Home = () => {
       </div>
 
       <div className="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5  gap-4 p-3">
-        {trending?.map((item, index) => (
+        {trending?.map((item, i) => (
           <div
-            key={`${item.id}-${index}`}
+            key={`${item.id}-${item.media_type}-${i}`}
+            onClick={() => clickM(item.id, item.media_type)}
             className=" hover:scale-105 hover:cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300 p-2 bg-black"
           >
             <div className="flex flex-col gap-3 border-rounded">
@@ -215,7 +225,7 @@ const Home = () => {
                 src={
                   item.poster_path
                     ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/blackkk at 13.48.28_ec0a14a9.jpg"
+                    : "/no-poster-image.jpg"
                 }
                 alt={item.name || item.title}
               />

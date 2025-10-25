@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { useState, useCallback, useEffect, useRef } from "react";
 
 const TVShows = () => {
@@ -14,7 +14,9 @@ const TVShows = () => {
   const [animationTv, setAnimationTv] = useState("");
   const inputRef = useRef();
   const containerRef = useRef();
+  const navigate = useNavigate();
   const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+  const query = searchTvText;
   function handleMenuOnClick() {
     if (mobileMenu) {
       setMobileMenu(false);
@@ -22,22 +24,27 @@ const TVShows = () => {
       setMobileMenu(true);
     }
   }
+  // Update handleOnClickSearch:
+  function handleOnClickSearch() {
+    if (searchTvText.trim()) {
+      navigate(`/search?query=${encodeURIComponent(searchTvText)}`);
+    }
+  }
 
   const searchOnlyTvData = useCallback(async () => {
     try {
       const res = await fetch(
         `https://api.themoviedb.org/3/search/tv?api_key=${apikey}&query=${encodeURIComponent(
-          searchTvText
+          query
         )}`
       );
       const data = await res.json();
       setSearchTv(data);
       setSearchTvResult(true);
-      console.log("TV only", data);
     } catch (err) {
       console.error("TV error", err);
     }
-  }, [searchTvText]);
+  }, [query]);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -60,12 +67,6 @@ const TVShows = () => {
     document.addEventListener("click", focussearch);
     return () => document.removeEventListener("click", focussearch);
   }, []);
-  /*data for searchmovie section */
-
-  function handleOnlyMovieOnClick() {
-    searchOnlyTvData();
-  }
-
   /*fetch by genre movie section */
   async function actionFetch() {
     try {
@@ -74,7 +75,6 @@ const TVShows = () => {
       );
       const data = await res.json();
       setActionTv(data);
-      console.log("action", data);
     } catch (err) {
       console.error("action Tv error", err);
     }
@@ -87,7 +87,6 @@ const TVShows = () => {
       );
       const data = await res.json();
       setDramaTv(data);
-      console.log("Drama", data);
     } catch (err) {
       console.error("action TV error", err);
     }
@@ -100,7 +99,6 @@ const TVShows = () => {
       );
       const data = await res.json();
       setsciandfanTv(data);
-      console.log("Drama", data);
     } catch (err) {
       console.error("action movie error", err);
     }
@@ -113,7 +111,6 @@ const TVShows = () => {
       );
       const data = await res.json();
       setmysteryTv(data);
-      console.log("mystery", data);
     } catch (err) {
       console.error("mystery error", err);
     }
@@ -126,10 +123,12 @@ const TVShows = () => {
       );
       const data = await res.json();
       setAnimationTv(data);
-      console.log("Animation", data);
     } catch (err) {
       console.error("animation  error", err);
     }
+  }
+  async function clickM(id) {
+    navigate(`/details/tv/${id}`);
   }
 
   const searchonlyTv = searchTv?.results;
@@ -194,7 +193,7 @@ const TVShows = () => {
           <form
             onSubmit={(e) => {
               e.preventDefault();
-              handleOnlyMovieOnClick();
+              handleOnClickSearch();
             }}
           >
             <img
@@ -226,17 +225,18 @@ const TVShows = () => {
           {/* Results Box */}
           {searchTvResult && searchonlyTv?.length > 0 && (
             <div className="absolute top-full left-0 w-full bg-black border border-orange-950 mt-2 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
-              {searchonlyTv.slice(0, 5).map((watch, i) => (
+              {searchonlyTv.slice(0, 5).map((watch) => (
                 <div
-                  key={i}
+                  key={watch.id}
+                  onClick={() => clickM(watch.id)}
                   className="flex items-center gap-3 p-2 hover:bg-orange-950/20 border-b border-orange-950"
                 >
                   <img
                     className="w-10 h-14 object-cover rounded"
                     src={
                       watch.poster_path
-                        ? `https://image.tmdb.org/t/p/w92${watch.poster_path}`
-                        : "/no-image.png"
+                        ? `https://image.tmdb.org/t/p/w500${watch.poster_path}`
+                        : "/no-poster-image.jpg"
                     }
                     alt={watch.name}
                   />
@@ -254,6 +254,7 @@ const TVShows = () => {
         {tvactions?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300"
           >
             <div>
@@ -261,7 +262,7 @@ const TVShows = () => {
                 src={
                   item.poster_path
                     ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-image.png"
+                    : "/no-poster-image.jpg"
                 }
                 className="rounded-2xl"
                 alt={item.name}
@@ -285,6 +286,7 @@ const TVShows = () => {
         {tvdrama?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300 "
           >
             <div>
@@ -316,6 +318,7 @@ const TVShows = () => {
         {tvscifiandfantasy?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer  hover:shadow-[0_0_15px_#431407] transition-all duration-300"
           >
             <div>
@@ -323,7 +326,7 @@ const TVShows = () => {
                 src={
                   item.poster_path
                     ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-image.png"
+                    : "/no-poster-image.jpg"
                 }
                 className="rounded-2xl"
                 alt={item.name}
@@ -347,6 +350,7 @@ const TVShows = () => {
         {tvmystery?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300 "
           >
             <div>
@@ -354,7 +358,7 @@ const TVShows = () => {
                 src={
                   item.poster_path
                     ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-image.png"
+                    : "/no-poster-image.jpg"
                 }
                 className="rounded-2xl"
                 alt={item.name}
@@ -378,6 +382,7 @@ const TVShows = () => {
         {tvanimation?.slice(0, 12).map((item) => (
           <div
             key={item.id}
+            onClick={() => clickM(item.id)}
             className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300"
           >
             <div>
@@ -385,7 +390,7 @@ const TVShows = () => {
                 src={
                   item.poster_path
                     ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/blackkk at 13.48.28_ec0a14a9.jpg"
+                    : "/no-poster-imaage.jpg"
                 }
                 className="rounded-2xl"
                 alt={item.name}
