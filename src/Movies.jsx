@@ -412,7 +412,8 @@ const Movies = () => {
               {item.title}
               {
                 <p className="text-sm text-gray-400">
-                  ⭐ {item.vote_average.toFixed(1)} ({item.vote_count})
+                  ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} ({item.vote_count}
+                  )
                 </p>
               }
             </div>

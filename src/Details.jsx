@@ -117,7 +117,7 @@ function Details({ mediaType = "movie" }) {
             <div className=" bg-black  p-6 rounded-lg">
               <p className="text-orange-950 text-sm mb-2">Rating</p>
               <p className="text-3xl text-orange-950 font-bold">
-                ⭐ {selectedMovies.vote_average.toFixed(1)}/10
+                ⭐ {selectedMovies.vote_average?.toFixed(1) ?? "N/A"}/10
               </p>
               <p className="text-orange-950 text-sm mt-1">
                 ({selectedMovies.vote_count} votes)
@@ -163,7 +163,8 @@ function Details({ mediaType = "movie" }) {
                     {item.title || item.name}
                     {
                       <p className="text-sm text-gray-400">
-                        ⭐ {item.vote_average.toFixed(1)} ({item.vote_count})
+                        ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} (
+                        {item.vote_count})
                       </p>
                     }
                   </div>

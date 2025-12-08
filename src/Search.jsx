@@ -111,7 +111,7 @@ const Search = () => {
                       {item.media_type === "movie" ? "🎬 Movie" : "📺 TV Show"}
                     </span>
                     <span className="text-xs text-gray-400">
-                      ⭐ {item.vote_average?.toFixed(1)}
+                      ⭐ {item.vote_average?.toFixed(1) ?? "N/A"}
                     </span>
                   </div>
                 </div>
