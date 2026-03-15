@@ -1,5 +1,7 @@
 import React, { useEffect, useState } from "react";
-import { useSearchParams, useNavigate, Link } from "react-router-dom";
+import { useSearchParams, useNavigate } from "react-router-dom";
+import BackHeader from "./BackHeader";
+import FavoriteButton from "./favourite/FavoriteButton";
 
 const Search = () => {
   const [searchParams] = useSearchParams();
@@ -7,26 +9,28 @@ const Search = () => {
   const [page, setPage] = useState(1);
   const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
-  const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+  const apikey = import.meta.env.VITE_TMDB_API_KEY;
 
-  const query = searchParams.get("query"); // Get search query from URL
-  function onclickback() {
-    navigate("/");
-  }
+  const query = searchParams.get("query");
+  const mediaType = searchParams.get("mediaType");
+
   useEffect(() => {
-    if (!query) return;
+    if (!query || !mediaType) return;
 
     async function fetchSearchResults() {
       setLoading(true);
       try {
         const res = await fetch(
-          `https://api.themoviedb.org/3/search/multi?api_key=${apikey}&query=${encodeURIComponent(
-            query
-          )}&page=${page}`
+          `https://api.themoviedb.org/3/search/${mediaType}?api_key=${apikey}&query=${encodeURIComponent(
+            query,
+          )}&page=${page}`,
         );
         const data = await res.json();
-        setSearchResults(data);
-        console.log("Search results:", data);
+        setSearchResults((prev) =>
+          page === 1
+            ? data
+            : { ...prev, results: [...prev.results, ...data.results] },
+        );
       } catch (err) {
         console.error("Search error:", err);
       } finally {
@@ -35,7 +39,7 @@ const Search = () => {
     }
 
     fetchSearchResults();
-  }, [query, page]);
+  }, [query, page, mediaType, apikey]);
 
   function handleClick(id, mediaType) {
     if (mediaType === "movie") {
@@ -46,7 +50,17 @@ const Search = () => {
   }
 
   function loadMore() {
-    setPage(page + 1);
+    setPage((prev) => prev + 1);
+  }
+  function multi(itemMediaType, mediaType) {
+    itemMediaType ? itemMediaType : mediaType;
+    if (itemMediaType === "movie" || mediaType === "movie") {
+      return "🎬 Movie ";
+    } else if (itemMediaType === "tv" || mediaType === "tv") {
+      return "📺 TV Show";
+    } else {
+      return "Individual";
+    }
   }
 
   if (!query) {
@@ -58,23 +72,9 @@ const Search = () => {
   }
 
   return (
-    <div className="min-h-screen ">
-      {/* Header */}
-      <div className="bg-orange-950 p-4 flex items-center ">
-        <span
-          className="bg-[#121212] flex items-center p-1 font-bold mr-3 cursor-pointer"
-          onClick={onclickback}
-        >
-          <img className="w-3 md:w-7" src="/backarrow.svg" alt="backarrow" />
-          Go back
-        </span>
+    <div className="min-h-screen  text-gray-900 dark:text-orange-950">
+      <BackHeader />
 
-        <div className="text-black font-[Bebas+Neue] text-xl md:text-3xl  font-extrabold tracking-wide ">
-          MALIKMARTINS
-        </div>
-      </div>
-
-      {/* Search Results */}
       <div className="max-w-7xl mx-auto p-6">
         <h1 className="text-orange-950 text-4xl font-bold mb-2">
           Search Results for: "{query}"
@@ -90,10 +90,26 @@ const Search = () => {
             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-4">
               {searchResults?.results?.map((item) => (
                 <div
-                  key={`${item.media_type}-${item.id}`}
-                  onClick={() => handleClick(item.id, item.media_type)}
-                  className="bg-black rounded-lg p-3 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300"
+                  key={`${mediaType}-${item.id}`}
+                  onClick={() =>
+                    handleClick(
+                      item.id,
+                      item.media_type ? item.media_type : mediaType,
+                    )
+                  }
+                  className="
+                cursor-pointer rounded-lg p-2
+                bg-gray-100 dark:bg-black
+                hover:scale-105 transition
+                border border-gray-200 dark:border-orange-950 relative
+              "
                 >
+                  <FavoriteButton
+                    item={{
+                      id: item.id,
+                      media_type: item.media_type || mediaType,
+                    }}
+                  />
                   <img
                     src={
                       item.poster_path
@@ -108,7 +124,7 @@ const Search = () => {
                   </h3>
                   <div className="flex items-center justify-between mt-2">
                     <span className="text-xs text-gray-400">
-                      {item.media_type === "movie" ? "🎬 Movie" : "📺 TV Show"}
+                      {multi(item.media_type, mediaType)}
                     </span>
                     <span className="text-xs text-gray-400">
                       ⭐ {item.vote_average?.toFixed(1) ?? "N/A"}
@@ -124,7 +140,12 @@ const Search = () => {
                 <button
                   onClick={loadMore}
                   disabled={loading}
-                  className="bg-orange-950 text-black font-bold px-8 py-3 rounded-lg hover:bg-orange-900 transition disabled:opacity-50"
+                  className="
+                px-8 py-3 rounded-lg font-bold
+                bg-gray-900 text-white
+                dark:bg-orange-950 dark:text-black
+                hover:opacity-80
+              "
                 >
                   {loading ? "Loading..." : "Load More"}
                 </button>

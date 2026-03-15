@@ -1,27 +1,28 @@
 import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
+import BackHeader from "./BackHeader";
+import FavoriteButton from "./favourite/FavoriteButton";
 
 function Details({ mediaType = "movie" }) {
-  const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+  const apikey = import.meta.env.VITE_TMDB_API_KEY;
   const [selectedMovies, setSelectedMovies] = useState(null);
   const [selectedMvideo, setSelectedMvideo] = useState(null);
   const [similar, setSimilar] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
-
+  const endpoint = mediaType === "movie" ? "movie" : "tv";
   useEffect(() => {
     async function detailsData() {
-      const endpoint = mediaType === "movie" ? "movie" : "tv";
       try {
         const [movieRes, videoRes, similarRes] = await Promise.all([
           fetch(
-            `https://api.themoviedb.org/3/${endpoint}/${id}?api_key=${apikey}`
+            `https://api.themoviedb.org/3/${endpoint}/${id}?api_key=${apikey}`,
           ),
           fetch(
-            `https://api.themoviedb.org/3/${endpoint}/${id}/videos?api_key=${apikey}`
+            `https://api.themoviedb.org/3/${endpoint}/${id}/videos?api_key=${apikey}`,
           ),
           fetch(
-            `https://api.themoviedb.org/3/${endpoint}/${id}/similar?api_key=${apikey}`
+            `https://api.themoviedb.org/3/${endpoint}/${id}/similar?api_key=${apikey}`,
           ),
         ]);
         const movieData = await movieRes.json();
@@ -36,9 +37,14 @@ function Details({ mediaType = "movie" }) {
     }
 
     detailsData();
-  }, [id, mediaType]);
-  function onclickback() {
-    navigate("/");
+  }, [id, endpoint, apikey]);
+
+  function handleClick(id) {
+    if (mediaType === "movie") {
+      navigate(`/details/movie/${id}`);
+    } else if (mediaType === "tv") {
+      navigate(`/details/tv/${id}`);
+    }
   }
 
   // Loading state - shows while data is being fetched
@@ -55,20 +61,8 @@ function Details({ mediaType = "movie" }) {
   const Msimilar = similar?.results;
 
   return (
-    <div className="min-h-screen  text-orange-950">
-      <div className="bg-orange-950 p-4 flex items-center ">
-        <span
-          className="bg-[#121212] flex items-center p-1 font-bold mr-3 cursor-pointer"
-          onClick={onclickback}
-        >
-          <img className="w-3 md:w-7" src="/backarrow.svg" alt="backarrow" />
-          Go back
-        </span>
-
-        <div className="text-black font-[Bebas+Neue] text-xl md:text-3xl  font-extrabold tracking-wide ">
-          MALIKMARTINS
-        </div>
-      </div>
+    <div className="min-h-screen  text-gray-900 dark:text-orange-950">
+      <BackHeader />
 
       <div className="max-w-7xl mx-auto px-4 py-8">
         <h1 className="text-4xl md:text-5xl font-bold mb-8 text-center">
@@ -94,15 +88,15 @@ function Details({ mediaType = "movie" }) {
           </div>
         ) : (
           // Fallback if no trailer exists
-          <div className="w-full max-w-5xl mx-auto mb-10 p-10  bg-black  rounded-xl text-center">
-            <p className="text-xl text-gray-400">
+          <div className="w-full max-w-5xl mx-auto mb-10 p-10  dark:bg-black  rounded-xl text-center">
+            <p className="text-xl dark:text-gray-400">
               No trailer available for this movie
             </p>
           </div>
         )}
 
         {/* Movie Details Section */}
-        <div className="max-w-5xl mx-auto text-orange-950">
+        <div className="max-w-5xl mx-auto dark:text-orange-950">
           {/* Overview Section */}
           <div className="mb-6">
             <h2 className="text-3xl font-bold mb-4">Overview</h2>
@@ -114,41 +108,46 @@ function Details({ mediaType = "movie" }) {
           {/* Movie Stats */}
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mt-8">
             {/* Rating */}
-            <div className=" bg-black  p-6 rounded-lg">
-              <p className="text-orange-950 text-sm mb-2">Rating</p>
-              <p className="text-3xl text-orange-950 font-bold">
+            <div className=" bg-white dark:bg-black  p-6 rounded-lg">
+              <p className="dark:text-orange-950 text-sm mb-2">Rating</p>
+              <p className="text-3xl dark:text-orange-950 font-bold">
                 ⭐ {selectedMovies.vote_average?.toFixed(1) ?? "N/A"}/10
               </p>
-              <p className="text-orange-950 text-sm mt-1">
-                ({selectedMovies.vote_count} votes)
+              <p className="dark:text-orange-950 text-sm mt-1">
+                ({selectedMovies.vote_count ?? "no"} votes)
               </p>
             </div>
 
-            <div className=" bg-black  p-6 rounded-lg">
-              <p className="text-orange-950 text-sm mb-2">Release Date</p>
-              <p className="text-2xl text-orange-950 font-bold">
+            <div className="bg-white dark:bg-black  p-6 rounded-lg">
+              <p className="dark:text-orange-950 text-sm mb-2">Release Date</p>
+              <p className="text-2xl dark:text-orange-950 font-bold">
                 {selectedMovies.release_date || "Unknown"}
               </p>
             </div>
 
             {selectedMovies.runtime && (
-              <div className=" bg-black p-6 rounded-lg">
-                <p className="text-orange-950 text-sm mb-2">Runtime</p>
-                <p className="text-2xl text-orange-950 font-bold">
+              <div className="  bg-white dark:bg-black p-6 rounded-lg">
+                <p className="dark:text-orange-950 text-sm mb-2">Runtime</p>
+                <p className="text-2xl dark:text-orange-950 font-bold">
                   {selectedMovies.runtime} min
                 </p>
               </div>
             )}
           </div>
-          <div className="mt-5 text-orange-950  text-3xl font-bold">
-            For you(Similar)
-          </div>
+          <div className="mt-5 heading-text">For you(Similar)</div>
           <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 mt-5 gap-2  ">
             {/*similar */}
             {Msimilar.length > 0 ? (
               Msimilar.slice(0, 6).map((item) => (
-                <div key={item.id} className="bg-black p-3 flex flex-col ">
+                <div
+                  key={item.id}
+                  onClick={() => handleClick(item.id)}
+                  className="card cursor-pointer relative"
+                >
                   <div>
+                    <FavoriteButton
+                      item={{ id: item.id, media_type: endpoint }}
+                    />
                     <img
                       src={
                         item.poster_path
@@ -159,10 +158,10 @@ function Details({ mediaType = "movie" }) {
                       alt={item.title || item.name}
                     />
                   </div>
-                  <div className="text-orange-950 text-lg ">
+                  <div className=" text-lg">
                     {item.title || item.name}
                     {
-                      <p className="text-sm text-gray-400">
+                      <p className="text-sm dark:text-gray-400">
                         ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} (
                         {item.vote_count})
                       </p>

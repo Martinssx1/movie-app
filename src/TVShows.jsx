@@ -1,33 +1,67 @@
 import { Link, useNavigate } from "react-router-dom";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect, useRef, useMemo } from "react";
+import Allskeletons from "./Skeletons/Allskeletons";
+import SearchButton from "./Buttons/SearchButton";
+import MenuButton from "./Buttons/MenuButton";
+import FavoriteButton from "./favourite/FavoriteButton";
 
-const TVShows = () => {
+const TVShows = ({ mobileMenu }) => {
   const [searchTv, setSearchTv] = useState(null);
+  const [refReady, setRefReady] = useState(false);
   const [searchTvText, setSearchTvText] = useState("");
   const [searchTvResult, setSearchTvResult] = useState(false);
-  const [mobileMenu, setMobileMenu] = useState(false);
+  const genresRefs = useRef({});
 
-  const [actionTv, setActionTv] = useState("");
-  const [dramaTv, setDramaTv] = useState("");
-  const [horrorTv, setsciandfanTv] = useState("");
-  const [mysteryTv, setmysteryTv] = useState("");
-  const [animationTv, setAnimationTv] = useState("");
+  const [fetchDataTv, setFetchDataTv] = useState({
+    action: null,
+    drama: null,
+    animation: null,
+    mystery: null,
+    sciandfan: null,
+  });
+  const [visibleGenre, setVisibleGenre] = useState({
+    action: false,
+    drama: false,
+    animation: false,
+    mystery: false,
+    sciandfan: false,
+  });
+  const genres = useMemo(
+    () => ["action", "drama", "sciandfan", "mystery", "animation"],
+    [],
+  );
   const inputRef = useRef();
   const containerRef = useRef();
   const navigate = useNavigate();
-  const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+  const apikey = import.meta.env.VITE_TMDB_API_KEY;
   const query = searchTvText;
-  function handleMenuOnClick() {
-    if (mobileMenu) {
-      setMobileMenu(false);
-    } else {
-      setMobileMenu(true);
-    }
-  }
+
+  useEffect(() => {
+    if (!refReady) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            const genre = entry.target.dataset.genre;
+            setVisibleGenre((prev) => ({ ...prev, [genre]: true }));
+            observer.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.1 },
+    );
+    genres.forEach((genre) => {
+      observer.observe(genresRefs.current[genre]);
+    });
+    return () => observer.disconnect();
+  }, [genres, refReady]);
+
   // Update handleOnClickSearch:
   function handleOnClickSearch() {
     if (searchTvText.trim()) {
-      navigate(`/search?query=${encodeURIComponent(searchTvText)}`);
+      navigate(
+        `/search?query=${encodeURIComponent(searchTvText)}&mediaType=tv`,
+      );
     }
   }
 
@@ -35,8 +69,8 @@ const TVShows = () => {
     try {
       const res = await fetch(
         `https://api.themoviedb.org/3/search/tv?api_key=${apikey}&query=${encodeURIComponent(
-          query
-        )}`
+          query,
+        )}`,
       );
       const data = await res.json();
       setSearchTv(data);
@@ -44,7 +78,7 @@ const TVShows = () => {
     } catch (err) {
       console.error("TV error", err);
     }
-  }, [query]);
+  }, [query, apikey]);
 
   useEffect(() => {
     const id = setTimeout(() => {
@@ -54,11 +88,23 @@ const TVShows = () => {
   }, [searchTvText, searchOnlyTvData]);
 
   useEffect(() => {
-    actionFetch();
-    dramaFetch();
-    sciandfantasyFetch();
-    mysteryFetch();
-    animationFetch();
+    async function allTvDataFetch(key, genre) {
+      try {
+        const res = await fetch(
+          `https://api.themoviedb.org/3/discover/tv?api_key=${apikey}&with_genres=${genre}&sort_by=popularity.desc`,
+        );
+        const data = await res.json();
+        setFetchDataTv((prev) => ({ ...prev, [key]: data }));
+      } catch (err) {
+        console.error("couldnt fetch TVshows Data", err);
+      }
+    }
+    allTvDataFetch("action", 10759);
+    allTvDataFetch("drama", 18);
+    allTvDataFetch("sciandfan", 10764);
+    allTvDataFetch("mystery", 9648);
+    allTvDataFetch("animation", 16);
+
     function focussearch(e) {
       if (containerRef.current && !containerRef.current.contains(e.target)) {
         return setSearchTvResult(false);
@@ -66,131 +112,32 @@ const TVShows = () => {
     }
     document.addEventListener("click", focussearch);
     return () => document.removeEventListener("click", focussearch);
-  }, []);
-  /*fetch by genre movie section */
-  async function actionFetch() {
-    try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/discover/tv?api_key=${apikey}&with_genres=10759&sort_by=popularity.desc`
-      );
-      const data = await res.json();
-      setActionTv(data);
-    } catch (err) {
-      console.error("action Tv error", err);
-    }
-  }
-  /*fetch by DRAMA*/
-  async function dramaFetch() {
-    try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/discover/tv?api_key=${apikey}&with_genres=18&sort_by=popularity.desc`
-      );
-      const data = await res.json();
-      setDramaTv(data);
-    } catch (err) {
-      console.error("action TV error", err);
-    }
-  }
-  /*fetch by sci&fan*/
-  async function sciandfantasyFetch() {
-    try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/discover/tv?api_key=${apikey}&with_genres=10764&sort_by=popularity.desc`
-      );
-      const data = await res.json();
-      setsciandfanTv(data);
-    } catch (err) {
-      console.error("action movie error", err);
-    }
-  }
-  /*fetch by mystery */
-  async function mysteryFetch() {
-    try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/discover/tv?api_key=${apikey}&with_genres=9648&sort_by=popularity.desc`
-      );
-      const data = await res.json();
-      setmysteryTv(data);
-    } catch (err) {
-      console.error("mystery error", err);
-    }
-  }
-  /*fetch by animation */
-  async function animationFetch() {
-    try {
-      const res = await fetch(
-        `https://api.themoviedb.org/3/discover/tv?api_key=${apikey}&with_genres=16&sort_by=popularity.desc`
-      );
-      const data = await res.json();
-      setAnimationTv(data);
-    } catch (err) {
-      console.error("animation  error", err);
-    }
-  }
+  }, [apikey]);
+
   async function clickM(id) {
     navigate(`/details/tv/${id}`);
   }
 
   const searchonlyTv = searchTv?.results;
-  const tvactions = actionTv?.results;
-  const tvdrama = dramaTv?.results;
-  const tvscifiandfantasy = horrorTv?.results;
-  const tvmystery = mysteryTv?.results;
-  const tvanimation = animationTv?.results;
 
-  if (!tvactions) return <div className="text-white">Loading...</div>;
-  if (!tvdrama) return <div className="text-white">Loading...</div>;
-  if (!tvscifiandfantasy) return <div className="text-white">Loading...</div>;
-  if (!tvmystery) return <div className="text-white">Loading...</div>;
-  if (!tvanimation) return <div className="text-white">Loading...</div>;
+  if (
+    !fetchDataTv.action ||
+    !fetchDataTv.drama ||
+    !fetchDataTv.sciandfan ||
+    !fetchDataTv.mystery ||
+    !fetchDataTv.animation
+  )
+    return <Allskeletons />;
 
   return (
-    <div className="relative">
-      <div className="bg-orange-950 p-4 flex items-center justify-between">
-        <div className="text-black font-[Bebas+Neue] text-xl md:text-3xl font-extrabold tracking-wide ">
-          <span className=" inline-block hover:rotate-[1turn]  cursor-pointer transition-all duration-[0.7s] ease-in hover:scale-150">
-            🎬
-          </span>
-          MALIKMARTINS
-        </div>
-        <div className=" md:hidden cursor-pointer " onClick={handleMenuOnClick}>
-          <img src="/menu.svg" alt="menu" />
-        </div>
+    <div>
+      <MenuButton menuButtonProps={mobileMenu} />
 
-        <div className="hidden  md:flex gap-10 font-bold text-xl">
-          <div className="relative group">
-            <Link to="/">HOME</Link>
-            <div className="border-b-4 absolute w-0  -bottom-[20px] border-black  group-hover:w-full transition-all duration-[0.4s] ease-in-out  "></div>
-          </div>
-          <div className="relative group ">
-            <Link to="/movies">MOVIES</Link>
-            <div className="border-b-4 absolute w-0  -bottom-[20px] border-black  group-hover:w-full transition-all duration-[0.4s] ease-in-out  "></div>
-          </div>
-          <div className="relative ">
-            <Link to="/tv">TV SHOWS</Link>
-            <div className="border-b-4 absolute w-full  -bottom-[20px] border-black "></div>
-          </div>
-        </div>
-        {mobileMenu && (
-          <div className=" absolute w-full  top-0 transform translate-y-15 right-0 z-10 flex flex-col bg-black opacity-70 text-white ">
-            <Link to="/">
-              <div className="p-2 border-b-2 border-orange-950 ">HOME</div>
-            </Link>
-            <Link to="/movies">
-              <div className=" p-2 border-b-2 border-orange-950  ">MOVIES</div>
-            </Link>
-            <Link to="/tv">
-              <div className=" p-2 border-b-2 border-orange-950  ">
-                TV SHOWS
-              </div>
-            </Link>
-          </div>
-        )}
-      </div>
       <div className="flex flex-col items-center  mt-10 mb-15 px-4">
         {/* Search Container */}
-        <div className="relative w-full max-w-[600px]" ref={containerRef}>
+        <div className="relative w-full max-w-150" ref={containerRef}>
           <form
+            name="searchTvForm"
             onSubmit={(e) => {
               e.preventDefault();
               handleOnClickSearch();
@@ -205,31 +152,45 @@ const TVShows = () => {
             {/* Input */}
             <input
               type="text"
+              name="searchInput"
               ref={inputRef}
               value={searchTvText}
               onFocus={() => setSearchTvResult(true)}
               placeholder="Search Tvshows..."
-              className="w-full bg-black text-gray-100 outline-none h-10 pl-10 pr-4 rounded-lg border border-orange-950"
+              className="
+    w-full
+    bg-white text-gray-900
+    dark:bg-black dark:text-gray-100
+    outline-none h-10 pl-10 pr-4 rounded-lg
+    border border-gray-300 dark:border-orange-950
+    focus:ring-2 focus:ring-blue-400 dark:focus:ring-orange-950
+  "
               onChange={(e) => setSearchTvText(e.target.value)}
             />
 
-            {/* Search Button */}
-            <button
-              type="submit"
-              className="absolute right-1 top-1/2 -translate-y-1/2 bg-orange-950 text-black font-bold px-4 py-1 rounded-md border border-black"
-            >
-              Search
-            </button>
+            <SearchButton query={searchTvText} mediaType="tv" />
           </form>
 
           {/* Results Box */}
           {searchTvResult && searchonlyTv?.length > 0 && (
-            <div className="absolute top-full left-0 w-full bg-black border border-orange-950 mt-2 rounded-md shadow-lg z-50 max-h-64 overflow-y-auto">
+            <div
+              className="
+  absolute top-full left-0 w-full
+  bg-white dark:bg-black
+  border border-gray-300 dark:border-orange-950
+  mt-2 rounded-md shadow-lg z-50
+  max-h-64 overflow-y-auto
+"
+            >
               {searchonlyTv.slice(0, 5).map((watch) => (
                 <div
                   key={watch.id}
                   onClick={() => clickM(watch.id)}
-                  className="flex items-center gap-3 p-2 hover:bg-orange-950/20 border-b border-orange-950"
+                  className="
+  flex items-center gap-3 p-2
+  hover:bg-blue-100 dark:hover:bg-orange-950/20
+  border-b border-gray-200 dark:border-orange-950
+"
                 >
                   <img
                     className="w-10 h-14 object-cover rounded"
@@ -240,174 +201,65 @@ const TVShows = () => {
                     }
                     alt={watch.name}
                   />
-                  <div className="text-gray-200 text-sm">{watch.name}</div>
+                  <div className="text-gray-900 dark:text-gray-200 text-sm">
+                    {watch.name}
+                  </div>
                 </div>
               ))}
             </div>
           )}
         </div>
       </div>
-      <div className=" flex justify-center mb-2  md:px-15  md:justify-start font-[Lobster] text-5xl text-orange-950  items-center gap-2">
-        Action
-      </div>
-      <div className=" grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2">
-        {tvactions?.slice(0, 12).map((item) => (
+      {genres.map((genre) => (
+        <div key={genre} className="flex flex-col ">
+          <header className="heading-text">{genre.toUpperCase()}</header>
           <div
-            key={item.id}
-            onClick={() => clickM(item.id)}
-            className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300"
-          >
-            <div>
-              <img
-                src={
-                  item.poster_path
-                    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-poster-image.jpg"
-                }
-                className="rounded-2xl"
-                alt={item.name}
-              />
-            </div>
-            <div className="text-orange-950 text-lg ">
-              {item.name}
-              {
-                <p className="text-sm text-gray-400">
-                  ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} ({item.vote_count}
-                  )
-                </p>
+            ref={(el) => {
+              if (!el) return;
+              genresRefs.current[genre] = el;
+              if (Object.keys(genresRefs.current).length === genres.length) {
+                setRefReady(true);
               }
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className=" flex justify-center mb-2  md:px-15  md:justify-start font-[Lobster] text-5xl text-orange-950  items-center gap-2">
-        Drama
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2">
-        {tvdrama?.slice(0, 12).map((item) => (
-          <div
-            key={item.id}
-            onClick={() => clickM(item.id)}
-            className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300 "
+            }}
+            data-genre={genre}
+            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2"
           >
-            <div>
-              <img
-                src={
-                  item.poster_path
-                    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-image.png"
-                }
-                className="rounded-2xl"
-                alt={item.name}
-              />
-            </div>
-            <div className="text-orange-950 text-lg ">
-              {item.name}
-              {
-                <p className="text-sm text-gray-400">
-                  ⭐ {item.vote_average.toFixed(1)} ({item.vote_count})
-                </p>
-              }
-            </div>
+            {fetchDataTv[genre]?.results?.slice(0, 12).map((item) => (
+              <div
+                key={item.id}
+                onClick={() => clickM(item.id)}
+                className={`card transition-all duration-600 ${
+                  visibleGenre[genre]
+                    ? "opacity-100 translate-y-0"
+                    : "opacity-0 translate-y-8"
+                }`}
+              >
+                <div>
+                  <img
+                    src={
+                      item.poster_path
+                        ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+                        : "/no-poster-image.jpg"
+                    }
+                    className="rounded-2xl min-h-70"
+                    alt={item.name}
+                  />
+                </div>
+                <div className="text-gray-900 dark:text-gray-200 text-sm">
+                  {item.name}
+                  {
+                    <p className="text-sm text-gray-400">
+                      ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} (
+                      {item.vote_count})
+                    </p>
+                  }
+                </div>
+                <FavoriteButton item={{ id: item.id, media_type: "tv" }} />
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
-      <div className=" flex justify-center mb-2  md:px-15  md:justify-start font-[Lobster] text-5xl text-orange-950  items-center gap-2">
-        sci-fi & Fantasy
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2">
-        {tvscifiandfantasy?.slice(0, 12).map((item) => (
-          <div
-            key={item.id}
-            onClick={() => clickM(item.id)}
-            className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer  hover:shadow-[0_0_15px_#431407] transition-all duration-300"
-          >
-            <div>
-              <img
-                src={
-                  item.poster_path
-                    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-poster-image.jpg"
-                }
-                className="rounded-2xl"
-                alt={item.name}
-              />
-            </div>
-            <div className="text-orange-950 text-lg ">
-              {item.name}
-              {
-                <p className="text-sm text-gray-400">
-                  ⭐ {item.vote_average.toFixed(1)} ({item.vote_count})
-                </p>
-              }
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className=" flex justify-center mb-2  md:px-15  md:justify-start font-[Lobster] text-5xl text-orange-950  items-center gap-2">
-        Mystery
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2">
-        {tvmystery?.slice(0, 12).map((item) => (
-          <div
-            key={item.id}
-            onClick={() => clickM(item.id)}
-            className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300 "
-          >
-            <div>
-              <img
-                src={
-                  item.poster_path
-                    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-poster-image.jpg"
-                }
-                className="rounded-2xl"
-                alt={item.name}
-              />
-            </div>
-            <div className="text-orange-950 text-lg ">
-              {item.name}
-              {
-                <p className="text-sm text-gray-400">
-                  ⭐ {item.vote_average.toFixed(1)} ({item.vote_count})
-                </p>
-              }
-            </div>
-          </div>
-        ))}
-      </div>
-      <div className=" flex justify-center mb-2  md:px-15  md:justify-start font-[Lobster] text-5xl text-orange-950  items-center gap-2">
-        Animation
-      </div>
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2">
-        {tvanimation?.slice(0, 12).map((item) => (
-          <div
-            key={item.id}
-            onClick={() => clickM(item.id)}
-            className="bg-black flex flex-col gap-1 rounded-2xl p-2 hover:scale-105 cursor-pointer hover:shadow-[0_0_15px_#431407] transition-all duration-300"
-          >
-            <div>
-              <img
-                src={
-                  item.poster_path
-                    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-poster-imaage.jpg"
-                }
-                className="rounded-2xl"
-                alt={item.name}
-              />
-            </div>
-            <div className="text-orange-950 text-lg ">
-              {item.name}
-              {
-                <p className="text-sm text-gray-400">
-                  ⭐ {item.vote_average.toFixed(1)} ({item.vote_count})
-                </p>
-              }
-            </div>
-          </div>
-        ))}
-      </div>
+        </div>
+      ))}
     </div>
   );
 };
