@@ -67,7 +67,7 @@ const Movies = ({ mobileMenu }) => {
   const inputRef = useRef(null);
   const containerRef = useRef(null);
 
-  const apikey = import.meta.env.VITE_TMDB_API_KEY;
+  const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
 
   const searchOnlyMovieData = useCallback(async () => {
     if (!searchMoviesText.trim()) return;

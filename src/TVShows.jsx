@@ -33,7 +33,8 @@ const TVShows = ({ mobileMenu }) => {
   const inputRef = useRef();
   const containerRef = useRef();
   const navigate = useNavigate();
-  const apikey = import.meta.env.VITE_TMDB_API_KEY;
+  const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+
   const query = searchTvText;
 
   useEffect(() => {

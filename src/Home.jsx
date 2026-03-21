@@ -15,7 +15,7 @@ const Home = ({ mobileMenu }) => {
 
   const navigate = useNavigate();
   const movieCardsRef = useRef(null);
-  const apikey = import.meta.env.VITE_TMDB_API_KEY;
+  const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
   /*intersection observer for movie cards */
   useEffect(() => {
     if (!movieCardsRef.current) return;

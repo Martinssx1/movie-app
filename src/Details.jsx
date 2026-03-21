@@ -4,7 +4,7 @@ import BackHeader from "./BackHeader";
 import FavoriteButton from "./favourite/FavoriteButton";
 
 function Details({ mediaType = "movie" }) {
-  const apikey = import.meta.env.VITE_TMDB_API_KEY;
+  const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
   const [selectedMovies, setSelectedMovies] = useState(null);
   const [selectedMvideo, setSelectedMvideo] = useState(null);
   const [similar, setSimilar] = useState(null);
