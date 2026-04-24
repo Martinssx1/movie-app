@@ -5,6 +5,7 @@ import Allskeletons from "./Skeletons/Allskeletons";
 import MenuButton from "./Buttons/MenuButton";
 import SearchButton from "./Buttons/SearchButton";
 import FavoriteButton from "./favourite/FavoriteButton";
+import SignIn from "./Signup/Signin/Signin";
 
 const Home = ({ mobileMenu }) => {
   const [searchAll, setSearchAll] = useState(null);
@@ -16,6 +17,7 @@ const Home = ({ mobileMenu }) => {
   const navigate = useNavigate();
   const movieCardsRef = useRef(null);
   const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
+
   /*intersection observer for movie cards */
   useEffect(() => {
     if (!movieCardsRef.current) return;
@@ -125,6 +127,8 @@ const Home = ({ mobileMenu }) => {
   return (
     <>
       <MenuButton menuButtonProps={mobileMenu} />
+      <SignIn />
+
       <div
         className="flex flex-col items-center mt-10 mb-10 px-4"
         ref={containerRef}
@@ -206,27 +210,28 @@ const Home = ({ mobileMenu }) => {
           )}
         </div>
       </div>
-      {/* Trending Section */}
-      <div
-        className="
+      <main>
+        {/* Trending Section */}
+        <div
+          className="
   flex justify-center md:px-15 md:justify-start
   font-[Lobster] text-5xl
   text-gray-900 dark:text-orange-950
   items-center gap-2 
 "
-      >
-        Trending <span className="animate-pulse text-3xl">🔥</span>
-      </div>
+        >
+          Trending <span className="animate-pulse text-3xl">🔥</span>
+        </div>
 
-      <div
-        ref={movieCardsRef}
-        className=" grid grid-cols-2 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-5  gap-4 p-3"
-      >
-        {trending?.map((item, i) => (
-          <div
-            key={`${item.id}-${item.media_type}-${i}`}
-            onClick={() => clickM(item.id, item.media_type)}
-            className={`
+        <section
+          ref={movieCardsRef}
+          className=" grid grid-cols-2 sm:grid-cols-2  md:grid-cols-3 lg:grid-cols-5  gap-4 p-3"
+        >
+          {trending?.map((item, i) => (
+            <div
+              key={`${item.id}-${item.media_type}-${i}`}
+              onClick={() => clickM(item.id, item.media_type)}
+              className={`
   ${visibleMovies ? "opacity-100 translate-y-0" : "opacity-0 translate-y-8"}
   transition-all duration-600
   p-2 rounded-lg cursor-pointer
@@ -236,28 +241,38 @@ const Home = ({ mobileMenu }) => {
   hover:shadow-[0_0_15px_rgba(59,130,246,0.5)]
   dark:hover:shadow-[0_0_15px_#431407]
 `}
-          >
-            <div className="flex flex-col gap-3 border-rounded">
-              <img
-                src={
-                  item.poster_path
-                    ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                    : "/no-poster-image.jpg"
-                }
-                className="min-h-70"
-                alt={item.name || item.title}
-              />
+            >
+              <div className="flex flex-col gap-3 border-rounded">
+                <img
+                  src={
+                    item.poster_path
+                      ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+                      : "/no-poster-image.jpg"
+                  }
+                  className="min-h-70"
+                  alt={item.name || item.title}
+                />
+              </div>
+              <div className="text-gray-900 dark:text-orange-950 text-lg">
+                {item.name || item.title}
+                <p className="text-sm text-gray-500 dark:text-gray-400">
+                  ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} ({item.vote_count}
+                  )
+                </p>
+                <FavoriteButton
+                  item={{
+                    movie_id: item.id,
+                    media_type: item.media_type,
+                    poster_path: item.poster_path,
+                    vote_average: item.vote_average,
+                    title: item.title || item.name,
+                  }}
+                />
+              </div>
             </div>
-            <div className="text-gray-900 dark:text-orange-950 text-lg">
-              {item.name || item.title}
-              <p className="text-sm text-gray-500 dark:text-gray-400">
-                ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} ({item.vote_count})
-              </p>
-              <FavoriteButton item={item} />
-            </div>
-          </div>
-        ))}
-      </div>
+          ))}
+        </section>
+      </main>
     </>
   );
 };

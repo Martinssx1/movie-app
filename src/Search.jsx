@@ -106,8 +106,11 @@ const Search = () => {
                 >
                   <FavoriteButton
                     item={{
-                      id: item.id,
+                      movie_id: item.id,
                       media_type: item.media_type || mediaType,
+                      poster_path: item.poster_path,
+                      vote_average: item.vote_average,
+                      title: item.title || item.name,
                     }}
                   />
                   <img

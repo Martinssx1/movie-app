@@ -25,7 +25,7 @@ function Theme({ children }) {
 export default Theme;
 export function GlobalTheme() {
   const overTheme = useContext(UseTheme);
-  if (!overTheme) {
+  if (overTheme === undefined) {
     throw new Error("check for Provider");
   }
   return overTheme;

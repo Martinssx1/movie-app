@@ -4,6 +4,9 @@ import Allskeletons from "./Skeletons/Allskeletons";
 import SearchButton from "./Buttons/SearchButton";
 import MenuButton from "./Buttons/MenuButton";
 import FavoriteButton from "./favourite/FavoriteButton";
+import SignIn from "./Signup/Signin/Signin";
+import { ErrorBoundary } from "react-error-boundary";
+import GenreFallback from "./Error/GenreFallback";
 
 const TVShows = ({ mobileMenu }) => {
   const [searchTv, setSearchTv] = useState(null);
@@ -133,6 +136,7 @@ const TVShows = ({ mobileMenu }) => {
   return (
     <div>
       <MenuButton menuButtonProps={mobileMenu} />
+      <SignIn />
 
       <div className="flex flex-col items-center  mt-10 mb-15 px-4">
         {/* Search Container */}
@@ -212,54 +216,64 @@ const TVShows = ({ mobileMenu }) => {
         </div>
       </div>
       {genres.map((genre) => (
-        <div key={genre} className="flex flex-col ">
-          <header className="heading-text">{genre.toUpperCase()}</header>
-          <div
-            ref={(el) => {
-              if (!el) return;
-              genresRefs.current[genre] = el;
-              if (Object.keys(genresRefs.current).length === genres.length) {
-                setRefReady(true);
-              }
-            }}
-            data-genre={genre}
-            className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2"
-          >
-            {fetchDataTv[genre]?.results?.slice(0, 12).map((item) => (
-              <div
-                key={item.id}
-                onClick={() => clickM(item.id)}
-                className={`card transition-all duration-600 ${
-                  visibleGenre[genre]
-                    ? "opacity-100 translate-y-0"
-                    : "opacity-0 translate-y-8"
-                }`}
-              >
-                <div>
-                  <img
-                    src={
-                      item.poster_path
-                        ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
-                        : "/no-poster-image.jpg"
+        <ErrorBoundary key={genre} FallbackComponent={GenreFallback}>
+          <div key={genre} className="flex flex-col ">
+            <header className="heading-text">{genre.toUpperCase()}</header>
+            <div
+              ref={(el) => {
+                if (!el) return;
+                genresRefs.current[genre] = el;
+                if (Object.keys(genresRefs.current).length === genres.length) {
+                  setRefReady(true);
+                }
+              }}
+              data-genre={genre}
+              className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-3 p-3 mb-2"
+            >
+              {fetchDataTv[genre]?.results?.slice(0, 12).map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => clickM(item.id)}
+                  className={`card transition-all duration-600 ${
+                    visibleGenre[genre]
+                      ? "opacity-100 translate-y-0"
+                      : "opacity-0 translate-y-8"
+                  }`}
+                >
+                  <div>
+                    <img
+                      src={
+                        item.poster_path
+                          ? `https://image.tmdb.org/t/p/w342${item.poster_path}`
+                          : "/no-poster-image.jpg"
+                      }
+                      className="rounded-2xl min-h-70"
+                      alt={item.name}
+                    />
+                  </div>
+                  <div className="text-gray-900 dark:text-gray-200 text-sm">
+                    {item.name}
+                    {
+                      <p className="text-sm text-gray-400">
+                        ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} (
+                        {item.vote_count})
+                      </p>
                     }
-                    className="rounded-2xl min-h-70"
-                    alt={item.name}
+                  </div>
+                  <FavoriteButton
+                    item={{
+                      movie_id: item.id,
+                      media_type: "tv",
+                      poster_path: item.poster_path,
+                      vote_average: item.vote_average,
+                      title: item.name,
+                    }}
                   />
                 </div>
-                <div className="text-gray-900 dark:text-gray-200 text-sm">
-                  {item.name}
-                  {
-                    <p className="text-sm text-gray-400">
-                      ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} (
-                      {item.vote_count})
-                    </p>
-                  }
-                </div>
-                <FavoriteButton item={{ id: item.id, media_type: "tv" }} />
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        </ErrorBoundary>
       ))}
     </div>
   );

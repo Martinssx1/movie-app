@@ -2,15 +2,38 @@ import React, { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import BackHeader from "./BackHeader";
 import FavoriteButton from "./favourite/FavoriteButton";
+import { ErrorBoundary } from "react-error-boundary";
+import SimilarFallback from "./Error/SimilarFallback";
+import { ChevronRight } from "lucide-react";
 
 function Details({ mediaType = "movie" }) {
   const apikey = "7fb2198dd66a3bd9c3257d003f070a5e";
   const [selectedMovies, setSelectedMovies] = useState(null);
   const [selectedMvideo, setSelectedMvideo] = useState(null);
+  const [index, setIndex] = useState(0);
   const [similar, setSimilar] = useState(null);
   const { id } = useParams();
   const navigate = useNavigate();
+
+  // Get the video key from the first result
+
+  const videos = selectedMvideo?.results?.find(
+    (video) => video.type === "Trailer" && video.site === "YouTube",
+  );
+  const videoKey = videos?.key;
+
+  const Msimilar = similar?.results;
+  const cardsPerView = 3;
+  const totalScrolls = Msimilar ? Msimilar.length - cardsPerView : 0;
+
   const endpoint = mediaType === "movie" ? "movie" : "tv";
+  useEffect(() => {
+    if (!Msimilar) return;
+    const interval = setInterval(() => {
+      setIndex((prev) => (prev + 1) % totalScrolls);
+    }, 4000);
+    return () => clearInterval(interval);
+  }, [Msimilar, totalScrolls]);
   useEffect(() => {
     async function detailsData() {
       try {
@@ -38,7 +61,12 @@ function Details({ mediaType = "movie" }) {
 
     detailsData();
   }, [id, endpoint, apikey]);
-
+  function handlePrevious() {
+    setIndex((prev) => (prev > 0 ? prev - 1 : totalScrolls));
+  }
+  function handleNext() {
+    setIndex((prev) => (prev + 1) % totalScrolls);
+  }
   function handleClick(id) {
     if (mediaType === "movie") {
       navigate(`/details/movie/${id}`);
@@ -56,10 +84,6 @@ function Details({ mediaType = "movie" }) {
     );
   }
 
-  // Get the video key from the first result
-  const videoKey = selectedMvideo?.results?.[0]?.key;
-  const Msimilar = similar?.results;
-
   return (
     <div className="min-h-screen  text-gray-900 dark:text-orange-950">
       <BackHeader />
@@ -70,7 +94,7 @@ function Details({ mediaType = "movie" }) {
         </h1>
 
         {videoKey ? (
-          <div className="w-full max-w-5xl mx-auto mb-10">
+          <section className="w-full max-w-5xl mx-auto mb-10">
             <div className="aspect-video w-full">
               <iframe
                 src={`https://www.youtube.com/embed/${videoKey}`}
@@ -85,7 +109,7 @@ function Details({ mediaType = "movie" }) {
                 className="rounded-xl shadow-2xl"
               />
             </div>
-          </div>
+          </section>
         ) : (
           // Fallback if no trailer exists
           <div className="w-full max-w-5xl mx-auto mb-10 p-10  dark:bg-black  rounded-xl text-center">
@@ -135,44 +159,77 @@ function Details({ mediaType = "movie" }) {
             )}
           </div>
           <div className="mt-5 heading-text">For you(Similar)</div>
-          <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 mt-5 gap-2  ">
-            {/*similar */}
-            {Msimilar.length > 0 ? (
-              Msimilar.slice(0, 6).map((item) => (
-                <div
-                  key={item.id}
-                  onClick={() => handleClick(item.id)}
-                  className="card cursor-pointer relative"
-                >
-                  <div>
-                    <FavoriteButton
-                      item={{ id: item.id, media_type: endpoint }}
-                    />
-                    <img
-                      src={
-                        item.poster_path
-                          ? `https://image.tmdb.org/t/p/w185${item.poster_path}`
-                          : "/no-poster-image.jpg"
-                      }
-                      className="rounded-2xl w-full"
-                      alt={item.title || item.name}
-                    />
-                  </div>
-                  <div className=" text-lg">
-                    {item.title || item.name}
-                    {
-                      <p className="text-sm dark:text-gray-400">
-                        ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} (
-                        {item.vote_count})
-                      </p>
-                    }
-                  </div>
-                </div>
-              ))
-            ) : (
-              <div>Not Available</div>
-            )}
-          </div>
+          {Msimilar ? (
+            <div className="flex gap-3 justify-end w-full mt-3 font-bold ">
+              <button
+                className="rounded-full w-6 h-6  flex justify-center items-center dark:border-gray-400 border-black border-2 cursor-pointer "
+                onClick={handlePrevious}
+              >
+                <ChevronRight className="rotate-180" size={16} />
+              </button>
+              <button
+                className="rounded-full w-6 h-6 flex justify-center items-center dark:border-gray-400 border-black border-2 cursor-pointer "
+                onClick={handleNext}
+              >
+                <ChevronRight size={16} />
+              </button>
+            </div>
+          ) : (
+            ""
+          )}
+          {/*similar */}
+          <ErrorBoundary FallbackComponent={SimilarFallback}>
+            <div className="overflow-hidden max-w-5xl">
+              <div
+                className="flex gap-3  p-2 transition-transform duration-300"
+                style={{
+                  transform: `translateX(-${index * 212}px)`,
+                }}
+              >
+                {Msimilar?.length > 0 ? (
+                  Msimilar?.map((item) => (
+                    <div
+                      key={item.id}
+                      onClick={() => handleClick(item.id)}
+                      className="card cursor-pointer relative border-none flex flex-col flex-1 min-w-50  "
+                    >
+                      <div>
+                        <FavoriteButton
+                          item={{
+                            movie_id: item.id,
+                            media_type: endpoint,
+                            poster_path: item.poster_path,
+                            vote_average: item.vote_average,
+                            title: item.title || item.name,
+                          }}
+                        />
+                        <img
+                          src={
+                            item.poster_path
+                              ? `https://image.tmdb.org/t/p/w185${item.poster_path}`
+                              : "/no-poster-image.jpg"
+                          }
+                          className="rounded-2xl min-h-70 w-full"
+                          alt={item.title || item.name}
+                        />
+                      </div>
+                      <div className=" text-lg">
+                        {item.title || item.name}
+                        {
+                          <p className="text-sm dark:text-gray-400">
+                            ⭐ {item.vote_average?.toFixed(1) ?? "N/A"} (
+                            {item.vote_count})
+                          </p>
+                        }
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <div>Not Available</div>
+                )}
+              </div>
+            </div>
+          </ErrorBoundary>
         </div>
       </div>
     </div>

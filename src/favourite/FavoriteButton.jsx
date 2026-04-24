@@ -2,25 +2,23 @@ import { Heart } from "lucide-react";
 
 import { GlobalFavourite } from "./ContextFavourite";
 export default function FavoriteButton({ item }) {
-  const { favourites, clickS } = GlobalFavourite();
+  const { manageFavorite, addFavorite, isFavorite, favoriteLoading } =
+    GlobalFavourite();
 
   return (
     <button
+      disabled={favoriteLoading}
       className="absolute top-3 right-3"
-      onClick={(e) => {
+      onClick={async (e) => {
         e.stopPropagation();
-        clickS(item.id, item.media_type);
+        isFavorite(item) ? await manageFavorite(item) : await addFavorite(item);
       }}
     >
       <Heart
         size={32}
         strokeWidth={3}
         className={` dark:text-black hover:text-red-500 hover:fill-current transition-colors ${
-          favourites.some(
-            (fav) => fav.id === item.id && fav.mediatype === item.media_type,
-          )
-            ? "fill-red-500"
-            : ""
+          isFavorite(item) ? "fill-red-500" : ""
         }`}
       />
     </button>

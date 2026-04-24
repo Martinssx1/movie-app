@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 
 import Home from "./Home";
 import { Routes, Route, useLocation } from "react-router-dom";
+import { ErrorBoundary } from "react-error-boundary";
 import Movies from "./Movies";
 import TVShows from "./TVShows";
 import Details from "./Details";
@@ -9,6 +10,7 @@ import Search from "./Search";
 import Favorite from "./favourite/Favorite";
 import Mainlayout from "./Routes/Mainlayout";
 import Detailsandsearchlayout from "./Routes/Detailsandsearchlayout";
+import ErrorFallback from "./Error/ErrorFallback";
 
 function App() {
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -28,18 +30,64 @@ function App() {
     <>
       <Routes>
         <Route element={<Mainlayout handleMenuOnClick={handleMenuOnClick} />}>
-          <Route path="/" element={<Home mobileMenu={mobileMenu} />} />
-          <Route path="/movies" element={<Movies mobileMenu={mobileMenu} />} />
-          <Route path="/tv" element={<TVShows mobileMenu={mobileMenu} />} />
+          <Route
+            path="/"
+            element={
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <Home mobileMenu={mobileMenu} />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/movies"
+            element={
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <Movies mobileMenu={mobileMenu} />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/tv"
+            element={
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <TVShows mobileMenu={mobileMenu} />
+              </ErrorBoundary>
+            }
+          />
         </Route>
         <Route element={<Detailsandsearchlayout />}>
           <Route
             path="/details/movie/:id"
-            element={<Details mediaType="movie" />}
+            element={
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <Details mediaType="movie" />
+              </ErrorBoundary>
+            }
           />
-          <Route path="/details/tv/:id" element={<Details mediaType="tv" />} />
-          <Route path="/search" element={<Search />} />
-          <Route path="/favorites" element={<Favorite />} />
+          <Route
+            path="/details/tv/:id"
+            element={
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <Details mediaType="tv" />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/search"
+            element={
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <Search />
+              </ErrorBoundary>
+            }
+          />
+          <Route
+            path="/favorites"
+            element={
+              <ErrorBoundary FallbackComponent={ErrorFallback}>
+                <Favorite />
+              </ErrorBoundary>
+            }
+          />
         </Route>
       </Routes>
     </>
